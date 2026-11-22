@@ -1,24 +1,70 @@
-# Parakeet TDT 0.6B v3, Cross-Platform Speech Recognition
+# Parakeet TDT 0.6B v3
+### Cross-Platform AI Speech Recognition
 
-Local speech-to-text benchmarking and real-time microphone transcription using NVIDIA Parakeet TDT 0.6B v3.
+Run NVIDIA Parakeet TDT 0.6B v3 locally on macOS, Linux, and Windows. Supports real-time microphone transcription, live transcript updates, offline audio processing, and performance benchmarking.
 
-Supports separate deployment paths for macOS, Linux, and Windows.
+<p align="center">
+  <img src="https://img.shields.io/badge/Model-Parakeet%20TDT%200.6B-blue" />
+  <img src="https://img.shields.io/badge/macOS-Apple%20MLX-black?logo=apple" />
+  <img src="https://img.shields.io/badge/Linux-ONNX-green?logo=linux" />
+  <img src="https://img.shields.io/badge/Windows-ONNX-blue?logo=windows" />
+  <img src="https://img.shields.io/badge/Inference-Local-success" />
+  <img src="https://img.shields.io/badge/License-See%20Model%20Terms-lightgrey" />
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#platform-support">Platforms</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#benchmark-results">Benchmarks</a> ·
+  <a href="#architecture">Architecture</a>
+</p>
+
+---
+
+## Performance at a Glance
+
+<details>
+<summary>Apple M4 Mac mini benchmark, 16 GB unified memory</summary>
+
+| Metric | Result |
+|---|---:|
+| Audio duration | 371.2 seconds |
+| Median transcription time | 10.25 seconds |
+| Average transcription time | 10.36 seconds |
+| Real-time factor | 36.23× |
+| Transcribed words | 1,033 |
+| Sentences | 81 |
+| INT8 model file | ~720 MB |
+
+</details>
+
+The benchmark processed over six minutes of recorded audio in approximately ten seconds using local MLX inference.
 
 ## Features
 
-- Local speech recognition.
+- Local speech recognition without cloud transcription APIs.
 - Real-time microphone capture.
 - Live transcript updates.
-- Apple Silicon MLX acceleration.
-- NVIDIA CUDA support through ONNX Runtime.
+- Apple Silicon acceleration through MLX.
+- NVIDIA CUDA support through ONNX Runtime, subject to backend compatibility.
 - CPU inference support.
-- INT8 quantization on the macOS MLX checkpoint.
+- INT8 quantization for the macOS MLX checkpoint.
 - Automatic model download on macOS.
 - Configurable audio chunk duration.
 - Transcript export to TXT.
-- Benchmark measurements and memory monitoring.
+- Repeated inference benchmarks.
+- Runtime and memory monitoring.
+- Separate platform-specific implementations.
 
-## Model
+## Model Information
+
+This project uses two separate model artifacts.
+
+| Model | Purpose |
+|---|---|
+| NVIDIA Parakeet TDT 0.6B v3 | Original speech recognition model |
+| Sonic Speech Parakeet INT8 | Apple MLX-compatible INT8 checkpoint |
 
 Original NVIDIA model:
 
@@ -28,7 +74,19 @@ Apple MLX INT8 checkpoint:
 
 https://huggingface.co/sonic-speech/parakeet-tdt-0.6b-v3-int8
 
-The original NVIDIA checkpoint and Apple MLX INT8 conversion are separate model artifacts.
+The original NVIDIA checkpoint and Apple MLX INT8 conversion are separate artifacts. They are not interchangeable.
+
+---
+
+## Platform Support
+
+| Platform | Runtime | Acceleration |
+|---|---|---|
+| macOS Apple Silicon | Parakeet MLX | Apple Metal |
+| Linux | Streaming ONNX | NVIDIA CUDA or CPU |
+| Windows | Streaming ONNX | CPU by default |
+
+Windows CUDA support depends on the installed ONNX Runtime build and upstream implementation support.
 
 ## Project Structure
 
@@ -47,30 +105,22 @@ parakeet/
 └── transcript_*.txt
 ```
 
-## Platform Support
-
-| Platform | Runtime | Acceleration |
-|---|---|---|
-| macOS Apple Silicon | Parakeet MLX | Apple Metal |
-| Linux | Streaming ONNX | NVIDIA CUDA or CPU |
-| Windows | Streaming ONNX | CPU by default |
-
-Windows CUDA support depends on the installed ONNX Runtime build and the upstream implementation.
-
 ---
 
-# 1. macOS Real-Time Transcription
+# Installation
 
-Uses your Apple Silicon Mac and the INT8 MLX checkpoint.
+## 1. macOS, Apple Silicon
+
+The macOS implementation uses MLX and the INT8 Parakeet checkpoint.
 
 ### Requirements
 
 - Apple Silicon Mac.
 - Python 3.
 - Microphone.
-- macOS microphone permission.
+- macOS microphone permissions.
 
-### Installation
+### Environment setup
 
 ```bash
 mkdir -p ~/AI/parakeet
@@ -82,9 +132,9 @@ source .venv/bin/activate
 pip install parakeet-mlx mlx sounddevice numpy huggingface_hub
 ```
 
-### Run
+### Real-time transcription
 
-Download or copy `realtime_mac.py` into the project directory.
+Copy `realtime_mac.py` into the project directory.
 
 ```bash
 python realtime_mac.py
@@ -112,7 +162,7 @@ Select a microphone:
 python realtime_mac.py --device 1
 ```
 
-### macOS Settings
+### macOS configuration
 
 | Parameter | Default |
 |---|---|
@@ -121,22 +171,22 @@ python realtime_mac.py --device 1
 | Sample rate | Model-configured |
 | Channels | Mono |
 | Chunk duration | 1.5 seconds |
-| Output | live_transcript.txt |
+| Output | `live_transcript.txt` |
 
 ---
 
-# 2. Linux Real-Time Transcription
+## 2. Linux, ONNX Runtime
 
-Uses the streaming ONNX implementation.
+The Linux implementation uses the streaming ONNX implementation.
 
-Repository:
+Upstream repository:
 
 https://github.com/dhyuk54/parakeet-streaming-onnx
 
 ### Requirements
 
 - Ubuntu 22.04 or 24.04.
-- Python version supported by the upstream project.
+- Python version supported by upstream dependencies.
 - Microphone.
 - ONNX model files.
 - NVIDIA GPU for CUDA acceleration, optional.
@@ -151,7 +201,7 @@ git clone https://github.com/dhyuk54/parakeet-streaming-onnx.git
 cd parakeet-streaming-onnx
 ```
 
-Create an environment:
+Create a virtual environment:
 
 ```bash
 python3 -m venv .venv
@@ -161,20 +211,20 @@ pip install -r requirements.txt
 pip install sounddevice
 ```
 
-Prepare the ONNX model following the upstream repository instructions.
+Prepare the ONNX model using the upstream repository instructions.
 
 Copy `realtime_linux.py` into the repository root.
 
-### Run with CPU
+### CPU inference
 
 ```bash
 python realtime_linux.py \
   --model-dir models/parakeet-tdt-0.6b-v3-onnx
 ```
 
-### Run with NVIDIA CUDA
+### NVIDIA CUDA inference
 
-Install a compatible ONNX Runtime GPU package:
+Install a compatible GPU runtime:
 
 ```bash
 pip install onnxruntime-gpu
@@ -188,7 +238,7 @@ python realtime_linux.py \
   --providers CUDAExecutionProvider CPUExecutionProvider
 ```
 
-Verify available execution providers:
+Verify execution providers:
 
 ```bash
 python -c "import onnxruntime as ort; print(ort.get_available_providers())"
@@ -204,7 +254,7 @@ python realtime_linux.py \
   --output live_transcript.txt
 ```
 
-List microphones:
+List microphone devices:
 
 ```bash
 python realtime_linux.py --list-devices
@@ -212,11 +262,11 @@ python realtime_linux.py --list-devices
 
 ---
 
-# 3. Windows Real-Time Transcription
+## 3. Windows, ONNX Runtime
 
-Uses the same streaming ONNX implementation.
+The Windows implementation uses the same streaming ONNX implementation.
 
-Windows execution defaults to CPU. CUDA support requires a compatible Windows ONNX Runtime GPU build and upstream backend support.
+CPU execution is the default. CUDA requires a compatible Windows ONNX Runtime GPU installation and upstream backend support.
 
 ### Requirements
 
@@ -227,7 +277,7 @@ Windows execution defaults to CPU. CUDA support requires a compatible Windows ON
 
 ### Installation
 
-Clone the repository:
+Clone the upstream repository:
 
 ```powershell
 git clone https://github.com/dhyuk54/parakeet-streaming-onnx.git
@@ -249,11 +299,11 @@ pip install -r requirements.txt
 pip install sounddevice
 ```
 
-Prepare the ONNX model using the upstream repository instructions.
+Prepare the ONNX model using upstream instructions.
 
 Copy `realtime_windows.py` into the repository root.
 
-### Run
+### Run transcription
 
 ```powershell
 python realtime_windows.py `
@@ -278,10 +328,10 @@ python realtime_windows.py --list-devices
 
 ---
 
-# 4. Real-Time Configuration
+# Real-Time Configuration
 
 | Parameter | macOS | Linux | Windows |
-|---|---:|---:|---:|
+|---|---|---|---|
 | Audio input | Microphone | Microphone | Microphone |
 | Sample rate | Model-configured | 16 kHz | 16 kHz |
 | Channels | Mono | Mono | Mono |
@@ -290,33 +340,63 @@ python realtime_windows.py --list-devices
 | Right context | MLX-managed | 2 sec | 2 sec |
 | Transcript output | TXT | TXT | TXT |
 
-The Linux and Windows scripts use chunk-based processing. Their approximate algorithmic latency is influenced by chunk duration and right-context duration.
+Linux and Windows use chunk-based processing. Approximate algorithmic latency depends on chunk duration and right-context duration.
 
-Actual end-to-end latency also depends on model inference speed, microphone buffering, hardware, and system load.
+End-to-end latency also depends on inference speed, microphone buffering, hardware, and system load.
 
 ---
 
-# 5. Real-Time Architecture
+# Architecture
 
 ```text
-Microphone
-    |
-Audio Capture
-    |
-16 kHz Mono PCM
-    |
-Audio Buffer
-    |
-Streaming ASR
-    |
-Transcript Processing
-    |
-Live Text Output
-    |
-TXT Export
+                  MICROPHONE
+                      |
+                      v
+                AUDIO CAPTURE
+                      |
+                      v
+                AUDIO BUFFER
+                      |
+              16 kHz MONO PCM
+                      |
+                      v
+                STREAMING ASR
+                      |
+                      v
+              TRANSCRIPT PROCESSING
+                      |
+              +-------+-------+
+              |               |
+              v               v
+         LIVE TEXT         TXT EXPORT
 ```
 
-For production applications:
+### Platform-specific execution
+
+```text
+                  AUDIO INPUT
+                       |
+                       v
+               PLATFORM DETECTION
+                       |
+           +-----------+-----------+
+           |           |           |
+           v           v           v
+         macOS       Linux      Windows
+           |           |           |
+           v           v           v
+          MLX       ONNX Runtime  ONNX Runtime
+           |           |           |
+           v           v           v
+         Metal    CUDA / CPU      CPU
+           |           |           |
+           +-----------+-----------+
+                       |
+                       v
+                TRANSCRIPT OUTPUT
+```
+
+## Suggested Production Architecture
 
 | Component | Suggested Technology |
 |---|---|
@@ -331,9 +411,21 @@ For production applications:
 
 ---
 
-# 6. Offline Benchmark Results
+# Benchmark Results
 
-Hardware: Apple M4 Mac mini, 16 GB unified memory.
+## Hardware
+
+| Component | Specification |
+|---|---|
+| Device | Apple Mac mini |
+| Processor | Apple M4 |
+| Unified memory | 16 GB |
+| Runtime | MLX |
+| Quantization | INT8 |
+| Audio format | Mono WAV, PCM 16-bit |
+| Audio sample rate | 44.1 kHz |
+
+## Full Audio Benchmark
 
 Audio duration: 371.2 seconds.
 
@@ -341,12 +433,13 @@ Audio duration: 371.2 seconds.
 |---|---:|
 | Median inference time | 10.25 sec |
 | Average inference time | 10.36 sec |
+| P95 inference time | 10.77 sec |
 | Real-time factor | 36.23× |
 | Words | 1,033 |
 | Sentences | 81 |
-| Model size | ~720 MB |
+| Model file size | ~720 MB |
 
-### Short Audio Tests
+## Short Audio Tests
 
 | Audio duration | Processing time | RTFx |
 |---|---:|---:|
@@ -354,15 +447,15 @@ Audio duration: 371.2 seconds.
 | 60 seconds | 1.27 sec | 47.06× |
 | 120 seconds | 2.68 sec | 44.83× |
 
-These are offline file-transcription results, not live microphone latency measurements.
+These results represent offline file transcription. They do not represent real-time microphone latency.
 
 No equivalent Linux or Windows benchmark results have been collected yet.
 
 ---
 
-# 7. Benchmark Methodology
+# Benchmark Methodology
 
-The offline benchmark records:
+The offline benchmark measures:
 
 - Model initialization time.
 - Warm-up duration.
@@ -372,24 +465,23 @@ The offline benchmark records:
 - Standard deviation.
 - Real-time factor.
 - CPU and process memory.
-- System RAM and swap.
+- System RAM availability.
+- Swap usage.
 - MLX Metal memory statistics.
 
-Formula:
+### Real-Time Factor
 
 ```text
 RTFx = Audio Duration / Processing Time
 ```
 
-Higher RTFx means faster transcription.
+Higher RTFx means faster transcription relative to audio duration.
 
----
+### Accuracy Evaluation
 
-# 8. Accuracy Evaluation
+Transcription speed alone does not establish recognition accuracy.
 
-Speed does not establish transcription accuracy.
-
-Recommended evaluation:
+Recommended evaluation metrics:
 
 - Word Error Rate (WER).
 - Character Error Rate (CER).
@@ -402,25 +494,42 @@ Use a human-verified reference transcript for accuracy measurements.
 
 ---
 
-# 9. Important Implementation Notes
+# Implementation Notes
 
-- The macOS script uses an MLX-compatible INT8 checkpoint.
-- The Linux and Windows scripts require an ONNX model prepared using the upstream streaming repository.
-- The Linux and Windows scripts depend on the upstream `StreamingTdtASR` Python interface.
+- macOS uses an MLX-compatible INT8 checkpoint.
+- Linux and Windows require an ONNX model prepared using the upstream streaming repository.
+- Linux and Windows depend on the upstream `StreamingTdtASR` Python interface.
 - Windows defaults to CPU execution.
-- CUDA execution requires a compatible runtime and backend.
-- Chunk-based transcription produces periodic updates. Do not treat these scripts as native token-by-token streaming.
-- The scripts have passed syntax validation, but require runtime testing on their target operating systems.
+- CUDA requires a compatible runtime and backend.
+- Chunk-based transcription produces periodic updates.
+- These scripts do not provide native token-by-token streaming.
+- Syntax validation does not establish successful runtime operation on every target platform.
 
-## References
+---
 
-- NVIDIA Parakeet: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
-- Apple MLX: https://github.com/ml-explore/mlx
-- Parakeet MLX: https://huggingface.co/sonic-speech/parakeet-tdt-0.6b-v3-int8
-- Streaming ONNX: https://github.com/dhyuk54/parakeet-streaming-onnx
-- NVIDIA NeMo: https://github.com/NVIDIA/NeMo
-- ONNX Runtime: https://onnxruntime.ai/
+# References
+
+| Project | Resource |
+|---|---|
+| NVIDIA Parakeet | https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3 |
+| Apple MLX | https://github.com/ml-explore/mlx |
+| Parakeet MLX INT8 | https://huggingface.co/sonic-speech/parakeet-tdt-0.6b-v3-int8 |
+| Streaming ONNX | https://github.com/dhyuk54/parakeet-streaming-onnx |
+| NVIDIA NeMo | https://github.com/NVIDIA/NeMo |
+| ONNX Runtime | https://onnxruntime.ai/ |
 
 ## License
 
-The original NVIDIA Parakeet TDT v3 model uses CC BY 4.0. Review the licenses of converted checkpoints, dependencies, and runtime implementations before redistribution or commercial deployment.
+The original NVIDIA Parakeet TDT v3 model uses CC BY 4.0.
+
+Review the licenses of converted checkpoints, dependencies, and runtime implementations before redistribution or commercial deployment.
+
+---
+
+<p align="center">
+  <strong>Local AI. Cross-platform speech recognition.</strong>
+  <br />
+  Built and benchmarked by Haroon Saleem.
+  <br />
+  <a href="https://github.com/Haroonhsa007">GitHub</a>
+</p>
